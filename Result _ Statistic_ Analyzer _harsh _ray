@@ -1,0 +1,130 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# Read CSV File
+def load_data():
+    if not os.path.exists("results.csv"):
+        print("Error: results.csv file not found!")
+        return None
+
+    try:
+        df = pd.read_csv("results.csv")
+        return df
+    except Exception as e:
+        print("Error:", e)
+        return None
+
+
+# Clean and Validate Data
+def clean_data(df):
+    if df is None or "Marks" not in df.columns:
+        print("Invalid CSV file. Marks column not found.")
+        return None
+
+    df["Marks"] = pd.to_numeric(df["Marks"], errors="coerce")
+
+    valid_marks = []
+    
+    for index, mark in enumerate(df["Marks"], start=1):
+        if pd.isna(mark):
+            print(f"Warning: Row {index} skipped - missing or invalid marks.")
+        elif mark < 0 or mark > 100:
+            print(f"Warning: Row {index} skipped - marks must be between 0 and 100.")
+        else:
+            valid_marks.append(mark)
+
+    if len(valid_marks) == 0:
+        print("No valid marks found. Nothing to analyse.")
+        return None
+
+    return np.array(valid_marks)
+
+
+# Show Statistics
+def show_statistics(marks):
+    print("\n----- RESULT STATISTICS -----")
+
+    print("Students:", len(marks))
+    print("Mean:", f"{np.mean(marks):.2f}")
+    print("Median:", f"{np.median(marks):.2f}")
+
+    values, counts = np.unique(marks, return_counts=True)
+    mode = values[np.argmax(counts)]
+
+    print("Mode:", mode)
+    print("Highest:", np.max(marks))
+    print("Lowest:", np.min(marks))
+    print("Standard deviation:", f"{np.std(marks):.2f}")
+
+
+# Pass Percentage and Distribution
+def show_distribution(marks):
+    passed = np.sum(marks >= 40)
+    failed = np.sum(marks < 40)
+
+    total = len(marks)
+    percentage = (passed / total) * 100
+
+    print("\n----- PASS PERCENTAGE -----")
+    print("Passed:", passed)
+    print("Failed:", failed)
+    print(f"Pass percentage: {percentage:.2f}%")
+
+    bands = {
+        "0-39": np.sum((marks >= 0) & (marks <= 39)),
+        "40-59": np.sum((marks >= 40) & (marks <= 59)),
+        "60-79": np.sum((marks >= 60) & (marks <= 79)),
+        "80-100": np.sum((marks >= 80) & (marks <= 100))
+    }
+
+    print("\n----- MARKS DISTRIBUTION -----")
+
+    for band, count in bands.items():
+        print(band, ":", count)
+
+    # Bar Chart
+    plt.bar(bands.keys(), bands.values())
+    plt.title("Student Marks Distribution")
+    plt.xlabel("Marks Range")
+    plt.ylabel("Number of Students")
+    plt.show()
+
+
+# Main Program
+def main():
+    df = load_data()
+
+    if df is None:
+        return
+
+    marks = clean_data(df)
+
+    if marks is None:
+        return
+
+    while True:
+        print("\n===== RESULT STATISTICS ANALYZER =====")
+        print("1. Show Statistics")
+        print("2. Pass Percentage and Distribution")
+        print("3. Exit")
+
+        choice = input("Enter your choice: ")
+
+        if choice == "1":
+            show_statistics(marks)
+
+        elif choice == "2":
+            show_distribution(marks)
+
+        elif choice == "3":
+            print("Thank you for using Result Statistics Analyzer!")
+            break
+
+        else:
+            print("Invalid choice! Please try again.")
+
+
+if __name__ == "__main__":
+    main()
